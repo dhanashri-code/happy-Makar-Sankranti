@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy Makar Sankranti</title>
+
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial, sans-serif;
+    }
+
+    body{
+      height:100vh;
+      overflow:hidden;
+      background:linear-gradient(to bottom,#87ceeb,#fff7cc);
+    }
+
+    .sun{
+      position:absolute;
+      width:140px;
+      height:140px;
+      border-radius:50%;
+      background:radial-gradient(circle,#ffeb3b,#ff9800);
+      top:40px;
+      right:50px;
+      box-shadow:0 0 60px rgba(255,152,0,0.8);
+      animation:rise 4s ease-out forwards;
+    }
+
+    @keyframes rise{
+      from{transform:translateY(200px);opacity:0;}
+      to{transform:translateY(0);opacity:1;}
+    }
+
+    .wishes{
+      position:absolute;
+      top:38%;
+      width:100%;
+      text-align:center;
+      color:#e65100;
+      pointer-events:none;
+    }
+
+    .wishes h1{font-size:3rem;margin-bottom:10px;}
+    .wishes p{font-size:1.3rem;}
+
+    /* Kite */
+    .kite{
+      position:absolute;
+      width:60px;
+      height:60px;
+      transform:rotate(var(--angle,45deg));
+      cursor:grab;
+      touch-action:none;
+      animation:fly 5s ease-in-out infinite;
+    }
+
+    .kite::after{
+      content:"";
+      position:absolute;
+      width:2px;
+      height:120px;
+      background:#555;
+      top:60px;
+      left:29px;
+      transform-origin:top center;
+      animation:stringWave 1.5s ease-in-out infinite;
+    }
+
+    @keyframes fly{
+      0%{transform:rotate(var(--angle)) translate(0,0);}
+      50%{transform:rotate(var(--angle)) translate(var(--drift,30px),-30px);}
+      100%{transform:rotate(var(--angle)) translate(0,0);}
+    }
+
+    @keyframes stringWave{
+      0%{transform:rotate(3deg);} 
+      50%{transform:rotate(-3deg);} 
+      100%{transform:rotate(3deg);} 
+    }
+
+    /* Tilgul */
+    .tilgul{
+      position:absolute;
+      width:18px;
+      height:18px;
+      border-radius:50%;
+      background:radial-gradient(circle,#d4a017,#8d6e63);
+      animation:fall 6s linear infinite;
+    }
+
+    @keyframes fall{
+      0%{top:-10%;opacity:0;}
+      20%{opacity:1;}
+      100%{top:110%;opacity:0;}
+    }
+
+    footer{
+      position:absolute;
+      bottom:10px;
+      width:100%;
+      text-align:center;
+      color:#6d4c41;
+    }
+
+    button{
+      position:fixed;
+      top:10px;
+      left:10px;
+      padding:8px 14px;
+      border:none;
+      border-radius:20px;
+      background:#ff9800;
+      color:#fff;
+      cursor:pointer;
+      z-index:10;
+    }
+
+    .panel{
+      position:fixed;
+      top:60px;
+      left:10px;
+      background:#fff8e1;
+      padding:10px 14px;
+      border-radius:12px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.2);
+      z-index:10;
+      font-size:0.9rem;
+      color:#e65100;
+    }
+  </style>
+</head>
+<body>
+
+  <audio id="bgMusic" autoplay loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8f1f6a7b1f.mp3" type="audio/mpeg">
+  </audio>
+  <button onclick="toggleMusic()">Music</button>
+
+  <div class="panel">
+    <label>Wind Direction</label><br>
+    <input type="range" id="windSlider" min="0" max="360" value="45">
+  </div>
+
+  <div class="sun"></div>
+
+  <div class="wishes">
+    <h1>Happy Makar Sankranti</h1>
+    <p id="wishText">May the Sun bring joy and prosperity</p>
+  </div>
+
+  <div id="kiteContainer"></div>
+
+  <div class="tilgul" style="left:20%;animation-delay:0s"></div>
+  <div class="tilgul" style="left:50%;animation-delay:2s"></div>
+  <div class="tilgul" style="left:80%;animation-delay:4s"></div>
+
+  <footer>© 2026 Makar Sankranti</footer>
+
+  <script>
+    /* Test: page loaded */
+    console.assert(document.body !== null, 'Body should exist');
+
+    const wishes=[
+      'Wishing you sweet moments like tilgul!',
+      'Let your dreams soar high like kites',
+      'May this Sankranti bring success and joy',
+      'Celebrate harvest with happiness'
+    ];
+
+    let wIndex=0;
+    const wishText=document.getElementById('wishText');
+    setInterval(()=>{
+      wIndex=(wIndex+1)%wishes.length;
+      wishText.textContent=wishes[wIndex];
+    },3000);
+
+    const music=document.getElementById('bgMusic');
+    function toggleMusic(){ music.paused?music.play():music.pause(); }
+
+    const container=document.getElementById('kiteContainer');
+    const windSlider=document.getElementById('windSlider');
+
+    function createKite(){
+      const kite=document.createElement('div');
+      kite.className='kite';
+      kite.style.left=Math.random()*80+'%';
+      kite.style.top=Math.random()*60+'%';
+      kite.style.background=`linear-gradient(45deg,hsl(${Math.random()*360},90%,60%),hsl(${Math.random()*360},90%,40%))`;
+      kite.style.setProperty('--angle',windSlider.value+'deg');
+      kite.style.setProperty('--drift',(Math.random()*40+10)+'px');
+      kite.style.animationDuration=4+Math.random()*4+'s';
+
+      let dragging=false,offsetX=0,offsetY=0;
+
+      const start=e=>{
+        dragging=true;
+        kite.style.animationPlayState='paused';
+        const p=e.touches?e.touches[0]:e;
+        offsetX=p.clientX-kite.offsetLeft;
+        offsetY=p.clientY-kite.offsetTop;
+      };
+
+      const move=e=>{
+        if(!dragging) return;
+        const p=e.touches?e.touches[0]:e;
+        kite.style.left=p.clientX-offsetX+'px';
+        kite.style.top=p.clientY-offsetY+'px';
+      };
+
+      const end=()=>{ dragging=false; kite.style.animationPlayState='running'; };
+
+      kite.addEventListener('mousedown',start);
+      kite.addEventListener('touchstart',start,{passive:true});
+      document.addEventListener('mousemove',move);
+      document.addEventListener('touchmove',move,{passive:true});
+      document.addEventListener('mouseup',end);
+      document.addEventListener('touchend',end);
+
+      windSlider.addEventListener('input',()=>{
+        const angle=windSlider.value;
+        kite.style.setProperty('--angle',angle+'deg');
+        const drift=Math.cos(angle*Math.PI/180)*40;
+        kite.style.setProperty('--drift',drift+'px');
+      });
+
+      container.appendChild(kite);
+      console.assert(container.contains(kite),'Kite added to DOM');
+    }
+
+    for(let i=0;i<6;i++) createKite();
+  </script>
+
+</body>
+</html>
